@@ -1,0 +1,113 @@
+create database film3;
+use film3;
+show tables;
+create table artist(art_id int,art_name varchar(255),art_gender varchar(255));
+create table producer(prod_id int,prod_name varchar(255),prod_ph varchar(255));
+create table films(film_id int,film_title varchar(255),film_year int,film_lang varchar(255),prod_id int);
+create table casting(art_id int,film_id int,part varchar(255));
+create table review(film_id int,stars int);
+insert into artist values(101,"arjun","male");
+insert into artist values(102,"putluru","male");
+insert into artist values(103,"sravani","male");
+insert into artist values(104,"shahithi","male");
+insert into producer values(200,"akhil",7416685676);
+insert into producer values(201,"fasna",9989747757);
+insert into producer values(202,"yuvaraj",9441361255);
+insert into producer values(203,"nithin",9703134366);
+insert into films values(11,"harrypotter",2017,"english",201);
+insert into films values(12,"eclipse",2015,"hindi",203);
+insert into films values(13,"fast and furious",2019,"english",201);
+insert into films values(14,"tom and jerry",2014,"telugu",200);
+insert into casting values(101,12,"actor");
+insert into casting values(101,11,"actor");
+insert into casting values(103,13,"actress");
+insert into casting values(103,12,"guest");
+insert into casting values(104,14,"actress");
+insert into review values(11,4);
+insert into review values(12,2);
+insert into review values(13,5);
+insert into review values(14,4);
+select * from artist;
+select * from producer;
+select * from films;
+select * from casting;
+select * from review;
+
+//Find the name of all the Films whose producer is “NIRAJ”. 
+select prod_id from producer where prod_name = "nithin";
+select film_title from films where prod_id in (select prod_id from producer where prod_name = "nithin");
+
+//Display all artists who acted in a film between 2016 and 2018.
+select film_year from films inner join casting on films.film_id = casting.film_id where film_year between 2016 and 2018; 
+select art_name from artist where art_id in (select art_id from casting inner join 
+films on casting.film_id=films.film_id  where film_year between 2016 and 2018);
+
+//Display the names of films with the stars received and sort the result on the basis of stars.
+select film_title from films where film_id in (select film_id from review order by stars desc);
+
+//Update the stars of all films whose producer is ‘NIRAJ’ to 5
+update review set stars=5  where film_id in (select film_id from films inner join producer on films.prod_id = producer.prod_id where prod_name = 'nithin');
+
+//full join on casting and films
+select * from films
+left join casting on films.film_id = casting.film_id
+union all
+select * from films
+right join casting on films.film_id = casting.film_id;
+
+//which movie is releasing on particular releasing year
+select film_title,film_year from films where film_year in ("2014","2015","2016","2017","2018","2019","2020");
+
+//View the artist based on part
+create view artistname as
+select art_name from artist where art_id in ( select art_id from casting where part = "actor");
+select * from artistname;
+
+//trigger the stars
+select * from casting;
+select * from review;
+create trigger stars_deduct
+after insert
+on casting
+for each row
+update review set stars = stars-1 where film_id = new.film_id;
+insert into casting values(104,13,"guest");
+insert into casting values(101,11,"guest");
+
+//Commit,Rollback and savepoint on films table
+set autocommit=0;
+select * from films;
+update films set film_title = "The Eclipse" where film_id = 12;
+insert into films values(15,"Doraemon",1995,"telugu",203);
+commit;
+delete from films where film_id = 13;
+rollback;
+
+savepoint inst1;
+insert into films values(16,"Oswald",1996,"telugu",204);
+savepoint inst2;
+delete from films where film_year = 2017;
+savepoint inst4;
+update films set film_title="Tom and Jerry the magic ring" where film_id = 14;
+
+rollback to inst4;
+
+//cross join
+select * from films;
+select * from artist;
+select films.film_title,films.film_year,films.film_lang,artist.art_id
+from films
+cross join artist; 
+
+//self join
+select * from producer;
+select a.prod_id,b.prod_name
+from producer a, producer b
+where a.prod_id < b.prod_id;
+
+//Display the films whose artistname starts with s
+select * from casting; 
+select film_title from films where film_id in (select film_id from casting where art_id in (select art_id from artist where art_name like 's%'));
+
+//Distinct part from casting
+select distinct part from casting;
